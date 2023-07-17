@@ -50,10 +50,10 @@ void subghz_preset_init(
     remote->txrx->preset->data_size = preset_data_size;
 }
 
-const char* subghz_txrx_radio_device_get_name(SubGhzTxRx* instance) {
+/*const char* subghz_txrx_radio_device_get_name(SubGhzTxRx* instance) {
     furi_assert(instance);
     return subghz_devices_get_name(instance->radio_device);
-}
+}*/
 
 SubGhzRemote* xremote_sg_remote_alloc() {
     SubGhzRemote* remote = malloc(sizeof(SubGhzRemote));

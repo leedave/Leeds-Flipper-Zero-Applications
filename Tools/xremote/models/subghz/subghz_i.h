@@ -24,33 +24,9 @@
 #include <flipper_format/flipper_format_i.h>
 
 #include "subghz_types.h"
+#include "txrx\subghz_txrx.h"
 
 extern const SubGhzProtocolRegistry subghz_protocol_registry;
-
-struct SubGhzTxRx {
-    //SubGhzWorker* worker;
-
-    SubGhzEnvironment* environment;
-    SubGhzReceiver* receiver;
-    //SubGhzTransmitter* transmitter;
-    //SubGhzProtocolFlag filter;
-    SubGhzProtocolDecoderBase* decoder_result;
-    FlipperFormat* fff_data;
-
-    SubGhzRadioPreset* preset;
-    //SubGhzHistory* history;
-    //uint16_t idx_menu_chosen;
-    //SubGhzTxRxState txrx_state;
-    //SubGhzHopperState hopper_state;
-    //SubGhzSpeakerState speaker_state;
-    //uint8_t hopper_timeout;
-    //uint8_t hopper_idx_frequency;
-    //SubGhzRxKeyState rx_key_state;
-
-    //float raw_threshold_rssi;
-    //uint8_t raw_threshold_rssi_low_count;
-    const SubGhzDevice* radio_device;
-};
 
 typedef struct SubGhzTxRx SubGhzTxRx;
 

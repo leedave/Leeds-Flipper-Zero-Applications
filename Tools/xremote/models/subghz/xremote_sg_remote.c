@@ -19,6 +19,7 @@
 #include <lib/subghz/subghz_file_encoder_worker.h>
 #include <gui/modules/variable_item_list.h>
 #include "xremote_sg_remote.h"
+#include "txrx/subghz_txrx_i.h"
 
 #define TAG "Xremote"
 
@@ -44,16 +45,14 @@ void subghz_preset_init(
     size_t preset_data_size) {
     furi_assert(context);
     SubGhzRemote* remote = context;
-    furi_string_set(remote->txrx->preset->name, preset_name);
+    /*furi_string_set(remote->txrx->preset->name, preset_name);
     remote->txrx->preset->frequency = frequency;
     remote->txrx->preset->data = preset_data;
-    remote->txrx->preset->data_size = preset_data_size;
+    remote->txrx->preset->data_size = preset_data_size;*/
+    subghz_txrx_set_preset(remote->txrx, preset_name, frequency, preset_data, preset_data_size);
 }
 
-const char* subghz_txrx_radio_device_get_name(SubGhzTxRx* instance) {
-    furi_assert(instance);
-    return subghz_devices_get_name(instance->radio_device);
-}
+
 
 SubGhzRemote* xremote_sg_remote_alloc() {
     SubGhzRemote* remote = malloc(sizeof(SubGhzRemote));
@@ -64,13 +63,18 @@ SubGhzRemote* xremote_sg_remote_alloc() {
     remote->setting = subghz_setting_alloc();
     subghz_setting_load(remote->setting, EXT_PATH("subghz/assets/setting_user"));
 
-    remote->txrx = malloc(sizeof(SubGhzTxRx));
-    remote->txrx->preset = malloc(sizeof(SubGhzRadioPreset));
-    remote->txrx->preset->name = furi_string_alloc();
-    subghz_preset_init(
-        remote, "AM650", subghz_setting_get_default_frequency(remote->setting), NULL, 0);
-    remote->txrx->fff_data = flipper_format_string_alloc();
-    remote->txrx->environment = subghz_environment_alloc();
+    //remote->txrx = subghz_txrx_alloc(); //malloc(sizeof(SubGhzTxRx));
+    //Currently refactoring. The command subghz_devices_init(); crashes flipper with furi_check error
+
+    
+    
+    //These should no longer be needed
+    //remote->txrx->preset = malloc(sizeof(SubGhzRadioPreset));
+    //remote->txrx->preset->name = furi_string_alloc();
+    //subghz_preset_init(
+    //    remote, "AM650", subghz_setting_get_default_frequency(remote->setting), NULL, 0);
+    //remote->txrx->fff_data = flipper_format_string_alloc();
+    //remote->txrx->environment = subghz_environment_alloc();
     /*subghz_environment_set_came_atomo_rainbow_table_file_name(
         remote->txrx->environment, EXT_PATH("subghz/assets/came_atomo"));
     subghz_environment_set_alutech_at_4n_rainbow_table_file_name(
@@ -90,18 +94,21 @@ void xremote_sg_remote_free(SubGhzRemote* remote) {
     furi_string_free(remote->name);
 
     // TXRX
-    subghz_receiver_free(remote->txrx->receiver);
+    subghz_txrx_free(remote->txrx);
+    /*subghz_receiver_free(remote->txrx->receiver);
     subghz_environment_free(remote->txrx->environment);
     flipper_format_free(remote->txrx->fff_data);
     furi_string_free(remote->txrx->preset->name);
     free(remote->txrx->preset);
-    free(remote->txrx);
+    free(remote->txrx);*/
 
     free(remote);
 }
 
 bool xremtoe_sg_set_preset(SubGhzRemote* remote, const char* preset) {
-    if(!strcmp(preset, "FuriHalSubGhzPresetOok270Async")) {
+    UNUSED(remote);UNUSED(preset);
+    //subghz_txrx_set_preset();
+    /*if(!strcmp(preset, "FuriHalSubGhzPresetOok270Async")) {
         furi_string_set(remote->txrx->preset->name, "AM270");
     } else if(!strcmp(preset, "FuriHalSubGhzPresetOok650Async")) {
         furi_string_set(remote->txrx->preset->name, "AM650");
@@ -114,16 +121,19 @@ bool xremtoe_sg_set_preset(SubGhzRemote* remote, const char* preset) {
     } else {
         FURI_LOG_E(TAG, "Unknown preset");
         return false;
-    }
+    }*/
     return true;
 }
 
 uint32_t xremote_sg_remote_get_frequency(SubGhzRemote* remote) {
-    return remote->txrx->preset->frequency;
+    UNUSED(remote);
+    return 123; //Temp fake data
+    //return remote->txrx->preset->frequency;
 }
 
 const char* xremote_sg_remote_get_preset(SubGhzRemote* remote) {
-    return furi_string_get_cstr(remote->txrx->preset->name);
+    return furi_string_get_cstr(remote->name); //Temp fake data
+    //return furi_string_get_cstr(remote->txrx->preset->name);
 }
 
 bool xremote_sg_remote_load(SubGhzRemote* remote, FuriString* path) {
@@ -168,7 +178,7 @@ bool xremote_sg_remote_load(SubGhzRemote* remote, FuriString* path) {
         if(!strcmp(furi_string_get_cstr(buf), "FuriHalSubGhzPresetCustom")) {
             //Todo add Custom_preset_module
             //delete preset if it already exists
-            subghz_setting_delete_custom_preset(
+            /*subghz_setting_delete_custom_preset(
                 remote->setting, furi_string_get_cstr(remote->txrx->preset->name));
             //load custom preset from file
             if(!subghz_setting_load_custom_preset(
@@ -177,7 +187,7 @@ bool xremote_sg_remote_load(SubGhzRemote* remote, FuriString* path) {
                    ff)) {
                 FURI_LOG_E(TAG, "Missing Custom preset");
                 break;
-            }
+            }*/
         }
 
         if(!flipper_format_read_string(ff, "Protocol", buf)) {
@@ -185,19 +195,21 @@ bool xremote_sg_remote_load(SubGhzRemote* remote, FuriString* path) {
             break;
         }
 
+        FlipperFormat* fff_data = subghz_txrx_get_fff_data(remote->txrx);
+
         if(!strcmp(furi_string_get_cstr(buf), "RAW")) {
-            subghz_protocol_raw_gen_fff_data(remote->txrx->fff_data, furi_string_get_cstr(path), subghz_txrx_radio_device_get_name(remote->txrx));
+            subghz_protocol_raw_gen_fff_data(fff_data, furi_string_get_cstr(path), subghz_txrx_radio_device_get_name(remote->txrx));
         } else {
             stream_copy_full(
                 flipper_format_get_raw_stream(ff),
-                flipper_format_get_raw_stream(remote->txrx->fff_data));
+                flipper_format_get_raw_stream(fff_data));
         }
 
         /*remote->txrx->decoder_result = subghz_receiver_search_decoder_base_by_name(
             remote->txrx->receiver, furi_string_get_cstr(buf));*/
-        if(remote->txrx->decoder_result) {
+        /*if(remote->txrx->decoder_result) {
             SubGhzProtocolStatus status = subghz_protocol_decoder_base_deserialize(
-                remote->txrx->decoder_result, remote->txrx->fff_data);
+                remote->txrx->decoder_result, fff_data);
             if(status != SubGhzProtocolStatusOk) {
                 //load_key_state = SubGhzLoadKeyStateProtocolDescriptionErr;
                 success = false;
@@ -206,7 +218,7 @@ bool xremote_sg_remote_load(SubGhzRemote* remote, FuriString* path) {
         } else {
             FURI_LOG_E(TAG, "Protocol not found");
             break;
-        }
+        }*/
 
         success = true;
     } while(false);

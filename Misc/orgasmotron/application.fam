@@ -10,7 +10,7 @@ App(
     fap_icon="orgasmotron_10px.png",
     fap_icon_assets="icons",
     fap_category="Tools",
-    fap_version="1.0",
+    fap_version="1.1",
     fap_author="Leedave",
     fap_description="Vibrate Flipper in different modes",
     fap_weburl="https://github.com/leedave/Leeds-Flipper-Zero-Applications",
